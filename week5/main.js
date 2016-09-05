@@ -4,6 +4,7 @@ var mainState = {
 		game.load.image('wallV', 'assets/wallVertical.png');
 		game.load.image('wallH', 'assets/wallHorizontal.png');
 		game.load.image('coin', 'assets/coin.png');
+		game.load.image('enemy', 'assets/enemy.png');
 	},
 	create: function() {
 		game.stage.backgroundColor = '#3498db';
@@ -35,6 +36,18 @@ var mainState = {
 		var middleBottom =game.add.sprite(100, 240, 'wallH', 0, this.walls);
 		middleBottom.scale.setTo(1.5, 1);
 
+		this.enemies =game.add.group();
+		this.enemies.enableBody = true;
+		this.enemies.createMultiple(10, 'enemy');
+		//call 'addEnemy' every 2.2 secs
+		game.time.events.loop(2200, this.addEnemy, this);
+		game.time.events.loop(2200, this.addEnemm, this);
+
+		/*this.enemm = game.add.group();
+		this.enemm.enableBody = true;
+		this.enemm.createMultiple(10, 'enemm');
+		game.time.events.loop(2200, this.addEnemm, this);*/
+
 
 		this.coin = game.add.sprite(60, 140, 'coin');
 		game.physics.arcade.enable(this.coin);
@@ -54,10 +67,52 @@ var mainState = {
 			this.playerDie();
 		}
 
+		game.physics.arcade.collide(this.enemies, this.walls);
+
+		game.physics.arcade.overlap(this.player, this.enemies, this.playerDie, null, this);
+
+
+
 		game.physics.arcade.overlap(this.player, this.coin, this.takeCoin, null, this);
 		
 		
 	},
+
+	addEnemy: function(){
+		var enemy = this.enemies.getFirstDead();
+
+		if(!enemy){
+			return;
+		}
+
+		enemy.anchor.setTo(0.5, 1);
+		enemy.reset(game.width/2, 0);
+		enemy.body.gravity.y = 500;
+		enemy.body.velocity.x = 100 * game.rnd.pick([-1,1]);
+		enemy.body.bounce.x = 1;
+		enemy.outOfBoundsKill = true;
+
+	},
+
+
+	addEnemm: function(){
+		var enemy = this.enemies.getFirstDead();
+
+		if(!enemy){
+			return;
+		}
+
+		enemy.anchor.setTo(0.5, 1);
+		enemy.reset(game.width/2, game.height);
+		enemy.body.gravity.y = -500;
+		enemy.body.velocity.x = 100 * game.rnd.pick([-1,1]);
+		enemy.body.bounce.x = 1;
+		enemy.outOfBoundsKill = true;
+
+	},	
+
+
+
 
 	movePlayer: function(){
 		if (this.cursor.left.isDown) {
@@ -90,6 +145,8 @@ var mainState = {
 
 
  },
+
+
 
  updateCoinPosition: function(){
  	var coinPosition = [
