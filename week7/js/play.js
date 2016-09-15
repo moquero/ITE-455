@@ -1,6 +1,17 @@
 var playState = {
+	startMenu: function(){
+		game.state.start('menu');
+	},
 	create: function() {
-		
+		this.emitter = game.add.emitter(0, 0, 15);
+		this.emitter.makeParticles('pixel');
+
+		this.emitter.setYSpeed(-150, 150);
+		this.emitter.setXSpeed(-150, 150);
+
+		this.emitter.setScale(2, 0, 2, 0, 800);
+
+		this.emitter.gravity = 0;
 		//var player = game.add.sprite(game.width/3, 170, 'player');
 		this.player = game.add.sprite(game.width/2, game.height/2, 'player');
 		this.player.anchor.setTo(0.5, 0.5);
@@ -39,6 +50,17 @@ var playState = {
 		this.enemm.createMultiple(10, 'enemm');
 		game.time.events.loop(2200, this.addEnemm, this);*/
 
+		this.jumpSound = game.add.audio('jump');
+		this.coinSound = game.add.audio('coin');
+		this.deadSound = game.add.audio('dead');
+
+		this.music = game.add.audio('music');
+		this.music.loop = true;
+		this.music.play();
+
+		this.player.animations.add('right', [1, 2], 8, true);
+		this.player.animations.add('left', [3, 4], 8, true);
+
 
 		this.coin = game.add.sprite(60, 140, 'coin');
 		game.physics.arcade.enable(this.coin);
@@ -65,6 +87,9 @@ var playState = {
 
 
 		game.physics.arcade.overlap(this.player, this.coin, this.takeCoin, null, this);
+		if (!this.player.alive) {
+			return;
+		}
 		
 		
 	},
@@ -108,19 +133,25 @@ var playState = {
 	movePlayer: function(){
 		if (this.cursor.left.isDown) {
    this.player.body.velocity.x = -200;
+   this.player.animations.play('left');
   }
 
   else if (this.cursor.right.isDown) {
    this.player.body.velocity.x = 200;
+   this.player.animations.play('right');
   }
 
   else {
    this.player.body.velocity.x = 0;
+   this.player.animations.stop();
+   this.player.frame = 0;
   }
 
   if (this.cursor.up.isDown && this.player.body.touching.down) {
    this.player.body.velocity.y = -320;
   }
+
+  this.jumpSound.play();
 
  },
 
@@ -130,9 +161,12 @@ var playState = {
  	this.scoreLabel.text = 'score: ' + game.global.score;
  	//var newX = game.rnd.integerInRange(0, game.width);
  	//var newY = game.rnd.integerInRange(0, game.width);
-		
 	//this.coin.reset(newX, newY);
+	this.coin.scale.setTo(0, 0);
+	game.add.tween(this.coin.scale).to({x:1, y:1}, 300).start();
+	game.add.tween(this.player.scale).to({x: 1.3, y: 1.3}, 100).yoyo(true).start();
 	this.updateCoinPosition();
+	this.coinSound.play();
 
 
  },
@@ -158,6 +192,15 @@ var playState = {
  },
 
  playerDie: function(){
- 	game.state.start("menu");
+ 	this.player.kill();
+ 	this.deadSound.play();
+ 	this.emitter.x = this.player.x;
+ 	this.emitter.y = this.player.y;
+ 	this.emitter.start(true, 800, null, 15);
+ 	game.time.events.add(1000, this.startMenu, this);
+ 	game.camera.flash(0xffffff, 300);
+ 	game.camera.shake(0.02, 300);
+ 	
+ 	//this.music.stop();
  }
 };
